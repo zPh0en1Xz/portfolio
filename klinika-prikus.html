@@ -1,0 +1,495 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="description" content="Демо: страница медицинской услуги со шторкой «Проблема / Решение» и формой записи.">
+<style>body{margin:0}img{max-width:100%}[hidden]{display:none!important}</style>
+<title>Клиника «Прикус»</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geologica:wght@500;600;700&family=Golos+Text:wght@400;500;600&family=IBM+Plex+Mono:wght@500&display=swap">
+<style>
+/* Layout: светлая медицинская страница. Шапка → первый экран (текст + шторка) → симптомы-чеклист → состав приёма по шагам → врач → запись → контакты. */
+:root{
+  --bg:#F4F7F6;
+  --surface:#FFFFFF;
+  --ink:#122B29;
+  --muted:#566C69;
+  --line:#D6E1DE;
+  --accent:#1E7F68;
+  --accent-ink:#FFFFFF;
+  --accent-soft:#DDEFE9;
+  --problem:#B9533B;
+  --problem-soft:#F6E4DE;
+  --shadow:0 18px 40px -24px rgba(18,43,41,.35);
+  --f-display:"Geologica","Golos Text",system-ui,sans-serif;
+  --f-body:"Golos Text",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --f-mono:"IBM Plex Mono",ui-monospace,Menlo,monospace;
+  --r:14px;
+  --wrap:1160px;
+  color-scheme:light;
+}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:16px;line-height:1.55;-webkit-font-smoothing:antialiased}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--surface)}
+h1,h2,h3{font-family:var(--f-display);line-height:1.12;text-wrap:balance;margin:0;letter-spacing:-.01em}
+p{margin:0}
+a{color:inherit}
+.wrap{max-width:var(--wrap);margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.eyebrow{font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--accent);font-weight:600}
+.mono{font-family:var(--f-mono);font-variant-numeric:tabular-nums}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:48px;padding:0 22px;border-radius:999px;border:1px solid transparent;font:600 15px/1 var(--f-body);cursor:pointer;text-decoration:none;transition:transform .2s ease,background-color .2s ease,box-shadow .2s ease}
+.btn-primary{background:var(--accent);color:var(--accent-ink)}
+.btn-primary:hover{background:#18694F;transform:translateY(-1px);box-shadow:0 10px 24px -12px rgba(30,127,104,.8)}
+.btn-ghost{background:transparent;color:var(--ink);border-color:var(--line)}
+.btn-ghost:hover{border-color:var(--accent);color:var(--accent)}
+:focus-visible{outline:3px solid #7CC3AE;outline-offset:2px}
+
+/* Демо-полоса и шапка */
+.demo-bar{background:var(--ink);color:#CFE3DD;font-size:13px;text-align:center;padding-block:7px}
+.header{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;background:rgba(255,255,255,.92);backdrop-filter:saturate(1.4) blur(10px);border-bottom:1px solid var(--line)}
+.header .wrap{display:flex;align-items:center;gap:24px;min-height:68px}
+.logo{display:flex;align-items:center;gap:10px;text-decoration:none;font-family:var(--f-display);font-weight:700;font-size:19px}
+.logo-mark{width:34px;height:34px;border-radius:10px;background:var(--accent);display:grid;place-items:center}
+.logo small{display:block;font:500 11px/1.2 var(--f-body);color:var(--muted);letter-spacing:.02em}
+.nav{display:flex;gap:22px;margin-left:auto;font-size:15px}
+.nav a{text-decoration:none;color:var(--muted);transition:color .2s}
+.nav a:hover{color:var(--accent)}
+.header-phone{font-weight:600;white-space:nowrap}
+.header .btn{min-height:42px;padding:0 18px}
+
+/* Первый экран */
+.hero{padding-block:56px 40px}
+.hero-grid{display:grid;grid-template-columns:minmax(0,5fr) minmax(0,6fr);gap:48px;align-items:center}
+.hero h1{font-size:clamp(34px,4.6vw,56px);font-weight:700;margin-top:14px}
+.hero-lead{margin-top:18px;font-size:18px;color:var(--muted);max-width:34em}
+.hero-actions{display:flex;flex-wrap:wrap;gap:12px;margin-top:28px}
+.hero-facts{display:flex;flex-wrap:wrap;gap:10px 24px;margin-top:28px;font-size:14px;color:var(--muted)}
+.hero-facts b{display:block;font-family:var(--f-display);font-size:20px;color:var(--ink)}
+.rise{animation:rise .8s cubic-bezier(.2,.7,.2,1) both}
+.rise.d2{animation-delay:.12s}.rise.d3{animation-delay:.24s}
+@keyframes rise{from{transform:translateY(14px);opacity:.55}to{transform:none;opacity:1}}
+
+/* Шторка «Проблема / Решение» */
+.compare{position:relative;border-radius:22px;overflow:hidden;background:var(--surface);box-shadow:var(--shadow);aspect-ratio:600/420;max-width:100%;user-select:none;touch-action:pan-y;cursor:ew-resize}
+.compare svg{position:absolute;inset:0;width:100%;height:100%;display:block}
+.layer-before{clip-path:inset(0 calc(100% - var(--pos,50%)) 0 0)}
+.compare-tag{position:absolute;top:14px;padding:6px 12px;border-radius:999px;font-size:13px;font-weight:600;pointer-events:none}
+.tag-before{left:14px;background:var(--problem-soft);color:var(--problem)}
+.tag-after{right:14px;background:var(--accent-soft);color:var(--accent)}
+.divider{position:absolute;top:0;bottom:0;left:var(--pos,50%);width:2px;margin-left:-1px;background:var(--surface);box-shadow:0 0 0 1px rgba(18,43,41,.08)}
+.handle{position:absolute;top:50%;left:var(--pos,50%);width:52px;height:52px;margin:-26px 0 0 -26px;border-radius:50%;border:0;background:var(--surface);box-shadow:0 8px 22px -6px rgba(18,43,41,.45);display:grid;place-items:center;cursor:ew-resize;padding:0}
+.handle svg{position:static;width:26px;height:26px}
+.compare-caption{margin-top:12px;font-size:13px;color:var(--muted);text-align:center}
+
+/* Секции */
+section{padding-block:72px}
+.section-head{display:grid;gap:12px;max-width:44em;margin-bottom:36px}
+.section-head h2{font-size:clamp(28px,3.4vw,40px);font-weight:700}
+.section-head p{color:var(--muted);font-size:17px}
+
+/* Симптомы */
+.symptoms{background:var(--surface);border-block:1px solid var(--line)}
+.sym-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+.sym{display:flex;gap:12px;align-items:flex-start;text-align:left;padding:16px;border-radius:var(--r);border:1px solid var(--line);background:var(--bg);font:500 15px/1.35 var(--f-body);color:var(--ink);cursor:pointer;transition:border-color .2s,background-color .2s,transform .2s}
+.sym:hover{border-color:var(--accent);transform:translateY(-2px)}
+.sym .box{flex:none;width:22px;height:22px;border-radius:7px;border:2px solid var(--line);background:var(--surface);display:grid;place-items:center;transition:all .2s}
+.sym .box svg{opacity:0;transition:opacity .2s}
+.sym[aria-pressed="true"]{border-color:var(--accent);background:var(--accent-soft)}
+.sym[aria-pressed="true"] .box{background:var(--accent);border-color:var(--accent)}
+.sym[aria-pressed="true"] .box svg{opacity:1}
+.sym small{display:block;color:var(--muted);font-weight:400;font-size:13px;margin-top:2px}
+.sym-result{margin-top:20px;display:flex;flex-wrap:wrap;align-items:center;gap:14px 20px;padding:18px 20px;border-radius:var(--r);background:var(--bg);border:1px dashed var(--line)}
+.sym-result p{flex:1 1 280px;min-width:0}
+.sym-note{margin-top:14px;font-size:13px;color:var(--muted)}
+
+/* Первичный приём */
+.visit-grid{display:grid;grid-template-columns:minmax(0,5fr) minmax(0,7fr);gap:40px;align-items:start}
+.price-card{background:var(--ink);color:#E8F2EF;border-radius:22px;padding:32px;display:grid;gap:18px;position:sticky;top:calc(env(safe-area-inset-top,0px) + 92px)}
+.price-card .eyebrow{color:#8FD3BE}
+.price{font-family:var(--f-display);font-size:56px;font-weight:700;line-height:1;color:#FFFFFF}
+.price span{font-size:24px;margin-left:4px}
+.price-card ul{margin:0;padding:0;list-style:none;display:grid;gap:8px;font-size:15px;color:#BFD6D0}
+.price-card li::before{content:"";display:inline-block;width:6px;height:6px;border-radius:50%;background:#8FD3BE;margin-right:10px;vertical-align:middle}
+.steps{list-style:none;margin:0;padding:0;display:grid;gap:0;counter-reset:s}
+.step{display:grid;grid-template-columns:44px minmax(0,1fr) auto;gap:16px;padding:20px 0;border-bottom:1px solid var(--line);align-items:start}
+.step:first-child{border-top:1px solid var(--line)}
+.step-num{width:36px;height:36px;border-radius:50%;border:1.5px solid var(--accent);color:var(--accent);display:grid;place-items:center;font:600 14px/1 var(--f-mono)}
+.step h3{font-size:18px;font-weight:600}
+.step p{color:var(--muted);font-size:15px;margin-top:4px}
+.step time{font-size:13px;color:var(--muted);white-space:nowrap;padding-top:4px}
+
+/* Врач */
+.doctor{background:var(--surface);border-block:1px solid var(--line)}
+.doc-grid{display:grid;grid-template-columns:minmax(0,4fr) minmax(0,7fr);gap:48px;align-items:center}
+.doc-photo{aspect-ratio:4/5;max-width:100%;border-radius:22px;background:linear-gradient(160deg,#DDEFE9 0%,#BFDCD3 100%);position:relative;overflow:hidden;display:grid;place-items:center}
+.doc-photo .initials{font-family:var(--f-display);font-size:96px;font-weight:700;color:rgba(18,43,41,.18)}
+.doc-photo .badge{position:absolute;left:16px;bottom:16px;right:16px;background:rgba(255,255,255,.9);border-radius:12px;padding:12px 14px;font-size:13px;color:var(--muted)}
+.doc-photo .badge b{display:block;color:var(--ink);font-size:15px}
+.doc-name{font-size:clamp(28px,3vw,38px);font-weight:700;margin-top:10px}
+.doc-role{color:var(--muted);margin-top:6px}
+.doc-facts{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin-top:28px}
+.fact{padding:16px;border-radius:var(--r);background:var(--bg);border:1px solid var(--line)}
+.fact b{display:block;font-family:var(--f-display);font-size:26px}
+.fact span{font-size:13px;color:var(--muted)}
+.doc-quote{margin-top:24px;padding-left:18px;border-left:3px solid var(--accent);color:var(--ink);font-size:17px;max-width:36em}
+
+/* Запись */
+.book-grid{display:grid;grid-template-columns:minmax(0,5fr) minmax(0,6fr);gap:48px;align-items:start}
+.contact-list{display:grid;gap:18px;margin-top:28px}
+.contact-list div{display:grid;gap:2px}
+.contact-list span{font-size:13px;color:var(--muted)}
+.contact-list b{font-size:17px;font-weight:600}
+.form{background:var(--surface);border:1px solid var(--line);border-radius:22px;padding:32px;box-shadow:var(--shadow);display:grid;gap:16px}
+.field{display:grid;gap:6px}
+.field label{font-size:14px;font-weight:500}
+.field input,.field textarea{width:100%;min-height:50px;border-radius:12px;border:1px solid var(--line);background:var(--bg);padding:12px 14px;font:16px/1.4 var(--f-body);color:var(--ink);transition:border-color .2s,background-color .2s}
+.field textarea{min-height:96px;resize:vertical}
+.field input:focus,.field textarea:focus{outline:none;border-color:var(--accent);background:var(--surface)}
+.field.invalid input{border-color:var(--problem)}
+.err{font-size:13px;color:var(--problem);min-height:0}
+.consent{display:flex;gap:10px;align-items:flex-start;font-size:13px;color:var(--muted)}
+.consent input{width:18px;height:18px;margin-top:2px;accent-color:var(--accent);flex:none}
+.form .btn{width:100%}
+.success{text-align:center;display:grid;gap:12px;justify-items:center;padding-block:24px}
+.success-icon{width:64px;height:64px;border-radius:50%;background:var(--accent-soft);display:grid;place-items:center}
+.success h3{font-size:24px}
+.success p{color:var(--muted);max-width:28em}
+
+/* Подвал */
+.footer{background:var(--ink);color:#A9C2BC;font-size:13px;padding-block:32px}
+.footer .wrap{display:grid;gap:10px}
+.footer strong{color:#E8F2EF;font-weight:600}
+.warning{font-family:var(--f-display);font-size:clamp(16px,2.2vw,22px);color:#E8F2EF;letter-spacing:.02em;text-transform:uppercase;padding-block:8px 14px;border-bottom:1px solid rgba(255,255,255,.12);margin-bottom:6px}
+
+@media (max-width:980px){
+  .nav{display:none}
+  .header .wrap{justify-content:space-between}
+  .hero-grid,.visit-grid,.doc-grid,.book-grid{grid-template-columns:minmax(0,1fr)}
+  .hero{padding-block:32px 24px}
+  .sym-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .price-card{position:static}
+  .doc-photo{max-width:340px}
+}
+@media (max-width:560px){
+  .header-phone{display:none}
+  section{padding-block:52px}
+  .sym-grid{grid-template-columns:minmax(0,1fr)}
+  .doc-facts{grid-template-columns:minmax(0,1fr)}
+  .step{grid-template-columns:40px minmax(0,1fr)}
+  .step time{grid-column:2;padding-top:0}
+  .form,.price-card{padding:22px}
+  .hero-actions .btn{flex:1 1 100%}
+}
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation:none!important;transition:none!important}
+}
+</style>
+
+</head>
+<body>
+<div class="demo-bar">Демо-проект из портфолио · клиника и врач вымышленные</div>
+
+<header class="header">
+  <div class="wrap">
+    <a class="logo" href="#top" aria-label="Клиника «Прикус», на главную">
+      <span class="logo-mark" aria-hidden="true">
+        <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M4 7c0-2 1.6-3.5 3.5-3.5 1 0 1.7.4 2.5.4s1.5-.4 2.5-.4C14.4 3.5 16 5 16 7c0 3-1.2 4.2-1.7 6.6-.3 1.6-.6 3.4-1.6 3.4-1.3 0-1.1-4-2.7-4s-1.4 4-2.7 4c-1 0-1.3-1.8-1.6-3.4C5.2 11.2 4 10 4 7Z" fill="#FFFFFF"/></svg>
+      </span>
+      <span>Прикус<small>гнатология и ортопедия</small></span>
+    </a>
+    <nav class="nav" aria-label="Разделы страницы">
+      <a href="#symptoms">Симптомы</a>
+      <a href="#visit">Первичный приём</a>
+      <a href="#doctor">Врач</a>
+      <a href="#book">Контакты</a>
+    </nav>
+    <span class="header-phone mono">+7 900 000-00-00</span>
+    <a class="btn btn-primary" href="#book">Записаться</a>
+  </div>
+</header>
+
+<main id="top">
+  <section class="hero">
+    <div class="wrap hero-grid">
+      <div class="rise">
+        <span class="eyebrow">Гнатология · ВНЧС</span>
+        <h1>Челюсть щёлкает, болит или устаёт к вечеру?</h1>
+        <p class="hero-lead">Гнатолог найдёт причину: сустав, прикус или перегруженные мышцы. На первом приёме вы получите понятный план диагностики и лечения с ценами.</p>
+        <div class="hero-actions">
+          <a class="btn btn-primary" href="#book">Записаться за 2 000 ₽</a>
+          <a class="btn btn-ghost" href="#symptoms">Проверить симптомы</a>
+        </div>
+        <div class="hero-facts">
+          <div><b class="mono">60 мин</b>длится первичный приём</div>
+          <div><b class="mono">10–21</b>ежедневно, без выходных</div>
+        </div>
+      </div>
+
+      <div class="rise d2">
+        <div class="compare" id="compare" style="--pos:50%">
+          <svg class="layer-after" viewBox="0 0 600 420" aria-hidden="true">
+            <rect width="600" height="420" fill="#EEF6F3"/>
+            <g opacity=".5" stroke="#CFE3DC"><path d="M0 70H600M0 140H600M0 210H600M0 280H600M0 350H600"/><path d="M100 0V420M200 0V420M300 0V420M400 0V420M500 0V420"/></g>
+            <path d="M58 150Q100 86 142 150" fill="none" stroke="#9BB8B0" stroke-width="10" stroke-linecap="round"/>
+            <circle cx="100" cy="142" r="22" fill="#FFFFFF" stroke="#1E7F68" stroke-width="4"/>
+            <path d="M100 164V250Q104 318 196 320H540" fill="none" stroke="#9BB8B0" stroke-width="10" stroke-linecap="round"/>
+            <ellipse cx="138" cy="232" rx="26" ry="62" fill="#DDEFE9" stroke="#1E7F68" stroke-width="2.5" transform="rotate(-12 138 232)"/>
+            <g fill="#FFFFFF" stroke="#7FA79C" stroke-width="2.5">
+              <rect x="190" y="132" width="36" height="66" rx="14"/><rect x="232" y="132" width="36" height="66" rx="14"/><rect x="274" y="132" width="36" height="66" rx="14"/><rect x="316" y="132" width="36" height="66" rx="14"/><rect x="358" y="132" width="36" height="66" rx="14"/><rect x="400" y="132" width="36" height="66" rx="14"/><rect x="442" y="132" width="36" height="66" rx="14"/><rect x="484" y="132" width="36" height="66" rx="14"/>
+            </g>
+            <g fill="#FFFFFF" stroke="#7FA79C" stroke-width="2.5">
+              <rect x="190" y="202" width="36" height="62" rx="14"/><rect x="232" y="202" width="36" height="62" rx="14"/><rect x="274" y="202" width="36" height="62" rx="14"/><rect x="316" y="202" width="36" height="62" rx="14"/><rect x="358" y="202" width="36" height="62" rx="14"/><rect x="400" y="202" width="36" height="62" rx="14"/><rect x="442" y="202" width="36" height="62" rx="14"/><rect x="484" y="202" width="36" height="62" rx="14"/>
+            </g>
+            <path d="M186 200H524" stroke="#1E7F68" stroke-width="3" stroke-dasharray="2 7" stroke-linecap="round"/>
+            <g font-family="Golos Text, sans-serif" font-size="15" font-weight="600" fill="#122B29">
+              <rect x="322" y="348" width="256" height="58" rx="14" fill="#FFFFFF" stroke="#D6E1DE"/>
+              <text x="340" y="372">Сустав на месте</text>
+              <text x="340" y="394" font-size="13" font-weight="400" fill="#566C69">ровный контакт, мышцы в покое</text>
+            </g>
+            <circle cx="100" cy="142" r="6" fill="#1E7F68"/>
+          </svg>
+
+          <svg class="layer-before" viewBox="0 0 600 420" aria-hidden="true">
+            <rect width="600" height="420" fill="#FBF1EE"/>
+            <g opacity=".5" stroke="#EBD6CF"><path d="M0 70H600M0 140H600M0 210H600M0 280H600M0 350H600"/><path d="M100 0V420M200 0V420M300 0V420M400 0V420M500 0V420"/></g>
+            <path d="M58 150Q100 86 142 150" fill="none" stroke="#C9AFA6" stroke-width="10" stroke-linecap="round"/>
+            <g transform="rotate(-6 100 142) translate(14 22)">
+              <circle cx="110" cy="146" r="22" fill="#FFFFFF" stroke="#B9533B" stroke-width="4"/>
+              <path d="M110 168V254Q114 322 206 324H550" fill="none" stroke="#C9AFA6" stroke-width="10" stroke-linecap="round"/>
+              <g fill="#FFFFFF" stroke="#C49A8E" stroke-width="2.5">
+                <rect x="200" y="206" width="36" height="62" rx="14"/><rect x="242" y="206" width="36" height="62" rx="14"/><rect x="284" y="206" width="36" height="62" rx="14"/><rect x="326" y="206" width="36" height="62" rx="14"/><rect x="368" y="206" width="36" height="62" rx="14"/><rect x="410" y="206" width="36" height="62" rx="14"/><rect x="452" y="206" width="36" height="62" rx="14"/><rect x="494" y="206" width="36" height="62" rx="14"/>
+              </g>
+            </g>
+            <ellipse cx="146" cy="236" rx="30" ry="64" fill="#F6E4DE" stroke="#B9533B" stroke-width="2.5" transform="rotate(-12 146 236)"/>
+            <g stroke="#B9533B" stroke-width="2.5" stroke-linecap="round"><path d="M128 210l12 8M126 232l14 6M130 254l12 4"/></g>
+            <g fill="#FFFFFF" stroke="#C49A8E" stroke-width="2.5">
+              <rect x="190" y="132" width="36" height="66" rx="14"/><rect x="232" y="132" width="36" height="66" rx="14"/><rect x="274" y="132" width="36" height="66" rx="14"/><rect x="316" y="132" width="36" height="66" rx="14"/><rect x="358" y="132" width="36" height="66" rx="14"/><rect x="400" y="132" width="36" height="66" rx="14"/><rect x="442" y="132" width="36" height="66" rx="14"/><rect x="484" y="132" width="36" height="66" rx="14"/>
+            </g>
+            <g fill="none" stroke="#B9533B" stroke-width="3" stroke-linecap="round">
+              <path d="M150 112q12 -10 24 0"/><path d="M156 96q18 -16 36 0"/>
+            </g>
+            <g font-family="Golos Text, sans-serif" font-size="15" font-weight="600" fill="#122B29">
+              <rect x="22" y="356" width="262" height="54" rx="14" fill="#FFFFFF" stroke="#EBD6CF"/>
+              <text x="40" y="378" fill="#B9533B">Щелчок и смещение</text>
+              <text x="40" y="398" font-size="13" font-weight="400" fill="#566C69">неровный контакт, мышцы в спазме</text>
+            </g>
+          </svg>
+
+          <span class="compare-tag tag-before">Проблема</span>
+          <span class="compare-tag tag-after">Решение</span>
+          <span class="divider" aria-hidden="true"></span>
+          <button class="handle" id="handle" type="button" role="slider" aria-label="Сравнить: проблема и решение" aria-valuemin="0" aria-valuemax="100" aria-valuenow="50">
+            <svg viewBox="0 0 26 26" fill="none" aria-hidden="true"><path d="M10 7 4 13l6 6M16 7l6 6-6 6" stroke="#1E7F68" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </button>
+        </div>
+        <p class="compare-caption">Потяните ползунок. Схема, а не фото пациента.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="symptoms" id="symptoms">
+    <div class="wrap">
+      <div class="section-head">
+        <span class="eyebrow">Симптомы</span>
+        <h2>Отметьте, что вас беспокоит</h2>
+        <p>Если совпадает хотя бы два пункта, стоит показаться гнатологу. Отмеченное попадёт в заявку, и администратору не придётся переспрашивать.</p>
+      </div>
+      <div class="sym-grid" id="symGrid"></div>
+      <div class="sym-result">
+        <p id="symText">Пока ничего не отмечено.</p>
+        <a class="btn btn-primary" href="#book">Записаться на приём</a>
+      </div>
+      <p class="sym-note">Чеклист не ставит диагноз. При острой боли или травме обратитесь за помощью сразу.</p>
+    </div>
+  </section>
+
+  <section id="visit">
+    <div class="wrap visit-grid">
+      <aside class="price-card">
+        <span class="eyebrow">Первичный приём гнатолога</span>
+        <div class="price mono">2 000<span>₽</span></div>
+        <ul>
+          <li>60 минут с врачом</li>
+          <li>План диагностики с ценами на руки</li>
+          <li>Без обязательств продолжать лечение</li>
+        </ul>
+        <a class="btn btn-primary" href="#book">Выбрать время</a>
+      </aside>
+      <div>
+        <div class="section-head">
+          <span class="eyebrow">Что входит</span>
+          <h2>Как проходит первый приём</h2>
+        </div>
+        <ol class="steps">
+          <li class="step"><span class="step-num">1</span><div><h3>Разговор о жалобах</h3><p>Когда начались симптомы, что их усиливает, какое лечение уже было.</p></div><time class="mono">10 мин</time></li>
+          <li class="step"><span class="step-num">2</span><div><h3>Осмотр сустава и мышц</h3><p>Пальпация жевательных мышц, проверка щелчков и болезненных точек.</p></div><time class="mono">15 мин</time></li>
+          <li class="step"><span class="step-num">3</span><div><h3>Движения челюсти</h3><p>Открывание рта, боковые сдвиги, траектория нижней челюсти.</p></div><time class="mono">15 мин</time></li>
+          <li class="step"><span class="step-num">4</span><div><h3>Оценка прикуса</h3><p>Контакты зубов, стёртость эмали, фото для истории болезни.</p></div><time class="mono">10 мин</time></li>
+          <li class="step"><span class="step-num">5</span><div><h3>План и стоимость</h3><p>Врач объясняет вероятную причину и какие исследования нужны дальше.</p></div><time class="mono">10 мин</time></li>
+        </ol>
+      </div>
+    </div>
+  </section>
+
+  <section class="doctor" id="doctor">
+    <div class="wrap doc-grid">
+      <div class="doc-photo" aria-hidden="true">
+        <span class="initials">МС</span>
+        <div class="badge"><b>Мария Соколова</b>ведёт первичный приём</div>
+      </div>
+      <div>
+        <span class="eyebrow">Ваш врач</span>
+        <h2 class="doc-name">Мария Соколова</h2>
+        <p class="doc-role">Ортопед-гнатолог, кандидат медицинских наук</p>
+        <div class="doc-facts">
+          <div class="fact"><b class="mono">11 лет</b><span>практики</span></div>
+          <div class="fact"><b class="mono">1 800+</b><span>пациентов с ВНЧС</span></div>
+          <div class="fact"><b class="mono">4</b><span>курса по окклюзии</span></div>
+        </div>
+        <p class="doc-quote">Щелчок в суставе не всегда требует лечения. Моя задача на первом приёме — понять, нужно ли вмешательство, и объяснить это без сложных терминов.</p>
+      </div>
+    </div>
+  </section>
+
+  <section id="book">
+    <div class="wrap book-grid">
+      <div>
+        <div class="section-head">
+          <span class="eyebrow">Запись</span>
+          <h2>Запишитесь на первичный приём</h2>
+          <p>Администратор перезвонит в течение 15 минут в рабочее время, уточнит жалобы и подберёт удобный день.</p>
+        </div>
+        <div class="contact-list">
+          <div><span>Телефон</span><b class="mono">+7 900 000-00-00</b></div>
+          <div><span>Адрес</span><b>Москва, ул. Примерная, 12</b></div>
+          <div><span>Часы работы</span><b>Ежедневно 10:00–21:00</b></div>
+        </div>
+      </div>
+
+      <form class="form" id="bookForm" novalidate>
+        <div id="formFields" style="display:grid;gap:16px">
+          <div class="field" id="f-name">
+            <label for="name">Имя</label>
+            <input id="name" name="name" autocomplete="given-name" placeholder="Как к вам обращаться">
+            <span class="err" id="e-name"></span>
+          </div>
+          <div class="field" id="f-phone">
+            <label for="phone">Телефон</label>
+            <input id="phone" name="phone" type="tel" inputmode="tel" autocomplete="tel" placeholder="+7 (___) ___-__-__">
+            <span class="err" id="e-phone"></span>
+          </div>
+          <div class="field">
+            <label for="comment">Что беспокоит</label>
+            <textarea id="comment" name="comment" placeholder="Например: щёлкает справа по утрам"></textarea>
+          </div>
+          <label class="consent" for="agree">
+            <input type="checkbox" id="agree" name="agree">
+            <span>Согласен на обработку персональных данных в соответствии с политикой клиники</span>
+          </label>
+          <span class="err" id="e-agree"></span>
+          <button class="btn btn-primary" type="submit">Отправить заявку</button>
+        </div>
+        <div class="success" id="success" hidden>
+          <div class="success-icon"><svg width="30" height="30" viewBox="0 0 30 30" fill="none"><path d="m8 15.5 4.5 4.5L22 10" stroke="#1E7F68" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+          <h3>Заявка принята</h3>
+          <p>Администратор перезвонит в течение 15 минут в рабочее время. На демо-странице данные никуда не отправляются.</p>
+          <button class="btn btn-ghost" type="button" id="again">Отправить ещё одну</button>
+        </div>
+      </form>
+    </div>
+  </section>
+</main>
+
+<footer class="footer">
+  <div class="wrap">
+    <div class="warning">Имеются противопоказания. Необходима консультация специалиста</div>
+    <p><strong>Клиника «Прикус»</strong> — вымышленная клиника. Страница сделана как демо для портфолио: шторка, анимации, чеклист симптомов, форма с проверкой полей и адаптивная вёрстка.</p>
+  </div>
+</footer>
+
+<script>
+(function(){
+  // Шторка «Проблема / Решение»
+  var box=document.getElementById('compare'), handle=document.getElementById('handle'), pos=50, dragging=false;
+  function setPos(p){pos=Math.max(4,Math.min(96,p));box.style.setProperty('--pos',pos+'%');handle.setAttribute('aria-valuenow',Math.round(pos));}
+  function fromEvent(e){var r=box.getBoundingClientRect();return (e.clientX-r.left)/r.width*100;}
+  box.addEventListener('pointerdown',function(e){dragging=true;box.setPointerCapture(e.pointerId);setPos(fromEvent(e));});
+  box.addEventListener('pointermove',function(e){if(dragging)setPos(fromEvent(e));});
+  ['pointerup','pointercancel'].forEach(function(t){box.addEventListener(t,function(){dragging=false;});});
+  handle.addEventListener('keydown',function(e){
+    if(e.key==='ArrowLeft'){setPos(pos-5);e.preventDefault();}
+    if(e.key==='ArrowRight'){setPos(pos+5);e.preventDefault();}
+    if(e.key==='Home'){setPos(4);e.preventDefault();}
+    if(e.key==='End'){setPos(96);e.preventDefault();}
+  });
+  // Подсказка движением при загрузке
+  if(!window.matchMedia('(prefers-reduced-motion: reduce)').matches){
+    var frames=[[0,50],[700,34],[1500,64],[2200,50]],t0=null;
+    function ease(x){return x<.5?2*x*x:1-Math.pow(-2*x+2,2)/2;}
+    function animStep(ts){
+      if(dragging)return; if(t0===null)t0=ts; var t=ts-t0-600; if(t<0){requestAnimationFrame(animStep);return;}
+      for(var i=1;i<frames.length;i++){ if(t<=frames[i][0]){var a=frames[i-1],b=frames[i],k=ease((t-a[0])/(b[0]-a[0]));setPos(a[1]+(b[1]-a[1])*k);requestAnimationFrame(animStep);return;} }
+      setPos(50);
+    }
+    requestAnimationFrame(animStep);
+  }
+
+  // Чеклист симптомов
+  var items=[
+    ['Щелчки или хруст','при открывании рта'],
+    ['Боль в области уха','или перед ним'],
+    ['Трудно широко открыть рот','челюсть как будто упирается'],
+    ['Скрежет зубами','по ночам или в стрессе'],
+    ['Усталость при жевании','к вечеру или после твёрдой еды'],
+    ['Головная боль по утрам','в висках или затылке'],
+    ['Челюсть уходит в сторону','при открывании рта'],
+    ['Стёртые зубы','или сколы эмали']
+  ];
+  var grid=document.getElementById('symGrid'), text=document.getElementById('symText'), comment=document.getElementById('comment');
+  var checkSvg='<svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="m2.5 6.2 2.2 2.3L9.5 3.5" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+  items.forEach(function(it,i){
+    var b=document.createElement('button');b.type='button';b.className='sym';b.setAttribute('aria-pressed','false');b.id='sym'+i;
+    b.innerHTML='<span class="box">'+checkSvg+'</span><span>'+it[0]+'<small>'+it[1]+'</small></span>';
+    b.addEventListener('click',function(){b.setAttribute('aria-pressed',b.getAttribute('aria-pressed')==='true'?'false':'true');update();});
+    grid.appendChild(b);
+  });
+  function plural(n){var m=n%10,h=n%100;if(m===1&&h!==11)return'симптом';if(m>=2&&m<=4&&(h<12||h>14))return'симптома';return'симптомов';}
+  function update(){
+    var on=[].slice.call(grid.querySelectorAll('[aria-pressed="true"]')).map(function(b){return items[+b.id.slice(3)][0].toLowerCase();});
+    if(!on.length){text.textContent='Пока ничего не отмечено.';}
+    else if(on.length<2){text.textContent='Отмечен 1 симптом. Если он держится дольше двух недель, лучше показаться врачу.';}
+    else{text.innerHTML='<b>Отмечено '+on.length+' '+plural(on.length)+'.</b> Это повод прийти на первичный приём: врач разберётся в причине за один визит.';}
+    if(!comment.dataset.touched){comment.value=on.length?('Отмечено в чеклисте: '+on.join(', ')):'';}
+  }
+  comment.addEventListener('input',function(){comment.dataset.touched='1';});
+
+  // Маска телефона
+  var phone=document.getElementById('phone');
+  phone.addEventListener('input',function(){
+    var d=phone.value.replace(/\D/g,'');
+    if(d[0]==='8')d='7'+d.slice(1); if(d&&d[0]!=='7')d='7'+d; d=d.slice(0,11);
+    var o='+7'; if(d.length>1)o+=' ('+d.slice(1,4); if(d.length>=4)o+=')'; if(d.length>4)o+=' '+d.slice(4,7); if(d.length>7)o+='-'+d.slice(7,9); if(d.length>9)o+='-'+d.slice(9,11);
+    phone.value=d.length?o:'';
+  });
+
+  // Форма
+  var form=document.getElementById('bookForm'), fields=document.getElementById('formFields'), ok=document.getElementById('success');
+  function setErr(id,msg){var f=document.getElementById('f-'+id);if(f)f.classList.toggle('invalid',!!msg);document.getElementById('e-'+id).textContent=msg;}
+  form.addEventListener('submit',function(e){
+    e.preventDefault();
+    var name=document.getElementById('name').value.trim(), digits=phone.value.replace(/\D/g,''), agree=document.getElementById('agree').checked, valid=true;
+    if(name.length<2){setErr('name','Напишите имя, чтобы администратор знал, как к вам обращаться');valid=false;}else setErr('name','');
+    if(digits.length!==11){setErr('phone','Введите номер полностью: 10 цифр после +7');valid=false;}else setErr('phone','');
+    if(!agree){setErr('agree','Без согласия на обработку данных мы не можем принять заявку');valid=false;}else setErr('agree','');
+    if(!valid)return;
+    fields.hidden=true; ok.hidden=false;
+  });
+  document.getElementById('again').addEventListener('click',function(){form.reset();delete comment.dataset.touched;update();ok.hidden=true;fields.hidden=false;});
+})();
+</script>
+
+</body>
+</html>

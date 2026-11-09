@@ -1,0 +1,307 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="description" content="Демо: страница вакансий с поиском, фильтрами и сортировкой.">
+<style>body{margin:0}img{max-width:100%}[hidden]{display:none!important}</style>
+<title>Портал вакансий «Смена»</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Onest:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500&display=swap">
+<style>
+/* Layout: интерфейс поиска работы. Шапка → строка поиска → две колонки: фильтры слева, выдача справа. На телефоне фильтры прячутся за кнопкой. */
+:root{
+  --bg:#F2F4F7;
+  --surface:#FFFFFF;
+  --ink:#172033;
+  --muted:#5E6B80;
+  --line:#DCE2EA;
+  --accent:#2453D6;
+  --accent-soft:#E6ECFC;
+  --ok:#16865A;
+  --ok-soft:#E1F3EA;
+  --f-ui:"Onest",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --f-mono:"IBM Plex Mono",ui-monospace,Menlo,monospace;
+  --r:14px;
+  --wrap:1200px;
+  color-scheme:light;
+}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-ui);font-size:15px;line-height:1.5;-webkit-font-smoothing:antialiased;font-variant-numeric:tabular-nums}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--surface)}
+h1,h2,h3{margin:0;text-wrap:balance;line-height:1.2}
+p{margin:0}
+.wrap{max-width:var(--wrap);margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+:focus-visible{outline:3px solid #9DB4F5;outline-offset:2px}
+button,input,select{font:inherit;color:inherit}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:44px;padding:0 18px;border-radius:10px;border:1px solid transparent;font-weight:600;cursor:pointer;text-decoration:none;transition:background-color .15s,border-color .15s,color .15s,transform .15s}
+.btn-primary{background:var(--accent);color:#FFFFFF}
+.btn-primary:hover{background:#1C44B5}
+.btn-ghost{background:var(--surface);border-color:var(--line);color:var(--ink)}
+.btn-ghost:hover{border-color:var(--accent);color:var(--accent)}
+
+.demo-bar{background:var(--ink);color:#C9D2E3;font-size:13px;text-align:center;padding-block:7px}
+.top{background:var(--surface);border-bottom:1px solid var(--line);position:sticky;top:env(safe-area-inset-top,0px);z-index:20}
+.top .wrap{display:flex;align-items:center;gap:28px;min-height:64px}
+.logo{display:flex;align-items:center;gap:10px;font-weight:700;font-size:19px;text-decoration:none;color:var(--ink)}
+.logo-mark{width:30px;height:30px;border-radius:8px;background:var(--accent);display:grid;place-items:center;color:#FFFFFF;font:500 13px/1 var(--f-mono)}
+.top nav{display:flex;gap:22px}
+.top nav a{text-decoration:none;color:var(--muted);font-weight:500}
+.top nav a[aria-current="page"]{color:var(--ink)}
+.top nav a:hover{color:var(--accent)}
+.top .btn{margin-left:auto}
+
+.search{background:var(--surface);border-bottom:1px solid var(--line);padding-block:24px}
+.search h1{font-size:clamp(22px,2.6vw,30px);font-weight:700}
+.search-row{display:grid;grid-template-columns:minmax(0,1fr) 220px auto;gap:10px;margin-top:16px}
+.input,.select{min-height:48px;border-radius:10px;border:1px solid var(--line);background:var(--bg);padding:0 14px;width:100%}
+.input:focus,.select:focus{outline:none;border-color:var(--accent);background:var(--surface)}
+.search-hints{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px;font-size:13px;color:var(--muted);align-items:center}
+.hint{border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:4px 12px;cursor:pointer}
+.hint:hover{border-color:var(--accent);color:var(--accent)}
+
+.layout{display:grid;grid-template-columns:280px minmax(0,1fr);gap:24px;align-items:start;padding-block:24px 64px}
+.filters{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:20px;display:grid;gap:22px;position:sticky;top:calc(env(safe-area-inset-top,0px) + 80px)}
+.f-group{display:grid;gap:10px;border:0;margin:0;padding:0}
+.f-title{font-weight:600;font-size:14px;padding:0}
+.f-salary{display:grid;gap:8px}
+.f-presets{display:flex;flex-wrap:wrap;gap:6px}
+.preset{border:1px solid var(--line);background:var(--surface);border-radius:8px;padding:4px 10px;font-size:13px;cursor:pointer}
+.preset[aria-pressed="true"]{border-color:var(--accent);background:var(--accent-soft);color:var(--accent)}
+.check{display:flex;align-items:center;gap:10px;cursor:pointer;font-size:14px}
+.check input{width:18px;height:18px;accent-color:var(--accent);flex:none;margin:0}
+.check .cnt{margin-left:auto;color:var(--muted);font:500 12px/1 var(--f-mono)}
+.toggle{display:flex;justify-content:space-between;align-items:center;gap:12px;font-size:14px;cursor:pointer}
+.switch{position:relative;width:40px;height:24px;flex:none}
+.switch input{position:absolute;inset:0;opacity:0;margin:0;cursor:pointer}
+.switch span{position:absolute;inset:0;border-radius:999px;background:var(--line);transition:background-color .2s;pointer-events:none}
+.switch span::after{content:"";position:absolute;top:3px;left:3px;width:18px;height:18px;border-radius:50%;background:var(--surface);transition:transform .2s;box-shadow:0 1px 3px rgba(23,32,51,.3)}
+.switch input:checked + span{background:var(--accent)}
+.switch input:checked + span::after{transform:translateX(16px)}
+.switch input:focus-visible + span{outline:3px solid #9DB4F5;outline-offset:2px}
+.reset{background:none;border:0;color:var(--accent);font-weight:600;cursor:pointer;padding:0;justify-self:start}
+
+.results-head{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:12px;margin-bottom:14px}
+.results-head h2{font-size:18px;font-weight:600}
+.results-head h2 span{color:var(--muted);font-weight:500}
+.sort{display:flex;align-items:center;gap:8px;font-size:14px;color:var(--muted)}
+.sort .select{min-height:40px;width:auto;background:var(--surface)}
+.open-filters{display:none}
+.chips-active{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px}
+.chip-x{display:inline-flex;align-items:center;gap:6px;border-radius:999px;background:var(--accent-soft);color:var(--accent);border:0;padding:5px 12px;font-size:13px;font-weight:500;cursor:pointer}
+.chip-x::after{content:"×";font-size:15px;line-height:1}
+
+.list{display:grid;gap:12px}
+.job{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:20px 22px;display:grid;grid-template-columns:minmax(0,1fr) auto;gap:6px 20px;transition:border-color .15s,box-shadow .15s}
+.job:hover{border-color:#B8C6E6;box-shadow:0 10px 26px -18px rgba(36,83,214,.6)}
+.job h3{font-size:18px;font-weight:600}
+.job h3 a{color:var(--ink);text-decoration:none}
+.job h3 a:hover{color:var(--accent)}
+.salary{font-size:18px;font-weight:700;white-space:nowrap;text-align:right}
+.salary.none{color:var(--muted);font-weight:500;font-size:15px}
+.company{color:var(--muted);font-size:14px;display:flex;flex-wrap:wrap;gap:4px 14px}
+.company b{color:var(--ink);font-weight:500}
+.tags{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;grid-column:1/-1}
+.tag{font-size:12px;font-weight:500;padding:4px 10px;border-radius:8px;background:var(--bg);color:var(--muted)}
+.tag.hot{background:var(--ok-soft);color:var(--ok)}
+.job-foot{grid-column:1/-1;display:flex;flex-wrap:wrap;align-items:center;gap:10px;margin-top:12px;padding-top:14px;border-top:1px solid var(--line)}
+.job-foot time{font:500 12px/1 var(--f-mono);color:var(--muted);margin-right:auto}
+.save{width:44px;height:44px;border-radius:10px;border:1px solid var(--line);background:var(--surface);display:grid;place-items:center;cursor:pointer;padding:0}
+.save svg path{fill:none;stroke:var(--muted);stroke-width:1.8}
+.save[aria-pressed="true"] svg path{fill:var(--accent);stroke:var(--accent)}
+.applied{background:var(--ok-soft);color:var(--ok);border-color:transparent;cursor:default}
+.applied:hover{background:var(--ok-soft)}
+.empty{background:var(--surface);border:1px dashed var(--line);border-radius:var(--r);padding:40px 24px;text-align:center;display:grid;gap:10px;justify-items:center}
+.empty h3{font-size:18px}
+.empty p{color:var(--muted);max-width:30em}
+.note{margin-top:18px;font-size:13px;color:var(--muted)}
+
+.foot{background:var(--surface);border-top:1px solid var(--line);padding-block:24px;font-size:13px;color:var(--muted)}
+
+@media (max-width:900px){
+  .top nav{display:none}
+  .layout{grid-template-columns:minmax(0,1fr)}
+  .filters{position:static;display:none}
+  .filters.open{display:grid}
+  .open-filters{display:inline-flex}
+  .search-row{grid-template-columns:minmax(0,1fr)}
+}
+@media (max-width:560px){
+  .top .btn{display:none}
+  .job{grid-template-columns:minmax(0,1fr);padding:18px}
+  .salary{text-align:left}
+  .job-foot .btn-primary{flex:1 1 auto}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+
+</head>
+<body>
+<div class="demo-bar">Демо-проект из портфолио · портал и компании вымышленные, вакансии для примера</div>
+<header class="top">
+  <div class="wrap">
+    <a class="logo" href="#jobs"><span class="logo-mark" aria-hidden="true">см</span>Смена</a>
+    <nav aria-label="Основное меню">
+      <a href="#jobs" aria-current="page">Вакансии</a>
+      <a href="#jobs">Компании</a>
+      <a href="#jobs">Зарплаты</a>
+    </nav>
+    <a class="btn btn-ghost" href="#jobs">Разместить вакансию</a>
+  </div>
+</header>
+
+<section class="search" id="jobs">
+  <div class="wrap">
+    <h1>Работа рядом с домом и удалённо</h1>
+    <form class="search-row" id="searchForm" role="search">
+      <input class="input" id="q" type="search" placeholder="Должность, навык или компания" aria-label="Поиск">
+      <select class="select" id="city" aria-label="Город">
+        <option value="">Все города</option>
+        <option>Екатеринбург</option><option>Москва</option><option>Пермь</option><option>Челябинск</option>
+      </select>
+      <button class="btn btn-primary" type="submit">Найти</button>
+    </form>
+    <div class="search-hints"><span>Часто ищут:</span>
+      <button class="hint" type="button" data-q="кладовщик">кладовщик</button>
+      <button class="hint" type="button" data-q="frontend">frontend</button>
+      <button class="hint" type="button" data-q="бухгалтер">бухгалтер</button>
+      <button class="hint" type="button" data-q="водитель">водитель</button>
+    </div>
+  </div>
+</section>
+
+<main class="wrap layout">
+  <aside class="filters" id="filters" aria-label="Фильтры">
+    <div class="f-group f-salary">
+      <label class="f-title" for="salary">Зарплата от, ₽</label>
+      <input class="input" id="salary" type="number" inputmode="numeric" min="0" step="5000" placeholder="Любая">
+      <div class="f-presets" id="presets"></div>
+    </div>
+    <fieldset class="f-group" id="schedGroup"><legend class="f-title">График</legend></fieldset>
+    <fieldset class="f-group" id="expGroup"><legend class="f-title">Опыт</legend></fieldset>
+    <label class="toggle" for="withSalary"><span>Только с зарплатой</span><span class="switch"><input type="checkbox" id="withSalary"><span></span></span></label>
+    <button class="reset" type="button" id="resetAll">Сбросить фильтры</button>
+  </aside>
+
+  <div>
+    <div class="results-head">
+      <h2 id="count" aria-live="polite"></h2>
+      <div class="sort">
+        <button class="btn btn-ghost open-filters" type="button" id="openFilters" aria-controls="filters" aria-expanded="false">Фильтры</button>
+        <label for="sort">Сортировка</label>
+        <select class="select" id="sort"><option value="date">по дате</option><option value="pay">по зарплате</option></select>
+      </div>
+    </div>
+    <div class="chips-active" id="activeChips"></div>
+    <div class="list" id="list"></div>
+    <p class="note">Вакансии на странице — примеры для демонстрации. Отклик и избранное работают только в этой вкладке.</p>
+  </div>
+</main>
+
+<footer class="foot"><div class="wrap">«Смена» — вымышленный портал. Демо вёрстки: поиск, фильтры, сортировка, сохранение и отклики на чистом JavaScript.</div></footer>
+
+<script>
+(function(){
+  var jobs=[
+    {id:1,t:'Кладовщик на склад готовой продукции',c:'ТехноСклад',city:'Екатеринбург',from:62000,to:75000,sched:'Сменный',exp:'Без опыта',days:0,tags:['Обучение','Питание']},
+    {id:2,t:'Frontend-разработчик (Vue)',c:'Курсор Лаб',city:'Москва',from:180000,to:240000,sched:'Удалённо',exp:'3–6 лет',days:1,tags:['Vue 3','TypeScript']},
+    {id:3,t:'Бухгалтер на первичную документацию',c:'Уралдомстрой',city:'Екатеринбург',from:70000,to:85000,sched:'Полный день',exp:'1–3 года',days:2,tags:['1С','ЭДО']},
+    {id:4,t:'Водитель категории C',c:'Логистика Восток',city:'Пермь',from:90000,to:120000,sched:'Сменный',exp:'1–3 года',days:0,tags:['Своя техника не нужна']},
+    {id:5,t:'Менеджер по продажам B2B',c:'Сибпласт',city:'Челябинск',from:60000,to:150000,sched:'Полный день',exp:'1–3 года',days:3,tags:['Оклад + %']},
+    {id:6,t:'Оператор call-центра',c:'Связь Плюс',city:'Екатеринбург',from:45000,to:55000,sched:'Гибкий',exp:'Без опыта',days:1,tags:['Можно студентам']},
+    {id:7,t:'Python-разработчик (backend)',c:'Данные и Ко',city:'Москва',from:220000,to:300000,sched:'Удалённо',exp:'3–6 лет',days:4,tags:['FastAPI','PostgreSQL']},
+    {id:8,t:'Повар горячего цеха',c:'Кафе «Чугунок»',city:'Пермь',from:55000,to:70000,sched:'Сменный',exp:'1–3 года',days:2,tags:['Питание','Форма']},
+    {id:9,t:'HR-менеджер по массовому подбору',c:'Сеть «Квартал»',city:'Екатеринбург',from:75000,to:90000,sched:'Полный день',exp:'1–3 года',days:5,tags:['Гибрид']},
+    {id:10,t:'Сборщик заказов',c:'Маркет Экспресс',city:'Челябинск',from:50000,to:65000,sched:'Сменный',exp:'Без опыта',days:0,tags:['Выплаты дважды в месяц']},
+    {id:11,t:'Дизайнер интерфейсов',c:'Студия Ромб',city:'Москва',from:0,to:0,sched:'Удалённо',exp:'3–6 лет',days:6,tags:['Figma','Дизайн-системы']},
+    {id:12,t:'Инженер-сметчик',c:'Уралдомстрой',city:'Екатеринбург',from:95000,to:130000,sched:'Полный день',exp:'3–6 лет',days:3,tags:['Гранд-Смета']},
+    {id:13,t:'Тестировщик (ручное тестирование)',c:'Курсор Лаб',city:'Пермь',from:70000,to:90000,sched:'Гибкий',exp:'Без опыта',days:1,tags:['Обучение','Гибрид']},
+    {id:14,t:'Электромонтажник',c:'ЭнергоМонтаж',city:'Челябинск',from:85000,to:110000,sched:'Сменный',exp:'1–3 года',days:4,tags:['Командировки']},
+    {id:15,t:'Администратор салона',c:'Студия «Локон»',city:'Екатеринбург',from:0,to:0,sched:'Сменный',exp:'Без опыта',days:2,tags:['2/2']},
+    {id:16,t:'Руководитель склада',c:'ТехноСклад',city:'Пермь',from:140000,to:170000,sched:'Полный день',exp:'Более 6 лет',days:7,tags:['WMS','Команда 40 человек']}
+  ];
+  var schedOpts=['Полный день','Сменный','Гибкий','Удалённо'], expOpts=['Без опыта','1–3 года','3–6 лет','Более 6 лет'];
+  var state={q:'',city:'',salary:0,sched:[],exp:'',withSalary:false,sort:'date',saved:{},applied:{}};
+  var $=function(id){return document.getElementById(id);};
+
+  function fmt(n){return n.toLocaleString('ru-RU').replace(/ /g,' ');}
+  function pay(j){if(!j.from&&!j.to)return 'Зарплата не указана';if(j.from&&j.to)return fmt(j.from)+' – '+fmt(j.to)+' ₽';return 'от '+fmt(j.from)+' ₽';}
+  function ago(d){if(d===0)return 'сегодня';if(d===1)return 'вчера';var m=d%10,h=d%100;return d+' '+((m===1&&h!==11)?'день':(m>=2&&m<=4&&(h<12||h>14))?'дня':'дней')+' назад';}
+  function vacWord(n){var m=n%10,h=n%100;if(m===1&&h!==11)return'вакансия';if(m>=2&&m<=4&&(h<12||h>14))return'вакансии';return'вакансий';}
+
+  // Фильтры
+  [50000,80000,120000,200000].forEach(function(v){var b=document.createElement('button');b.type='button';b.className='preset';b.textContent=fmt(v);b.dataset.v=v;b.setAttribute('aria-pressed','false');b.addEventListener('click',function(){var on=state.salary===v;state.salary=on?0:v;$('salary').value=on?'':v;render();});$('presets').appendChild(b);});
+  schedOpts.forEach(function(s,i){var l=document.createElement('label');l.className='check';l.innerHTML='<input type="checkbox" id="sch'+i+'" value="'+s+'"><span>'+s+'</span><span class="cnt" data-sched="'+s+'"></span>';l.querySelector('input').addEventListener('change',function(e){if(e.target.checked)state.sched.push(s);else state.sched=state.sched.filter(function(x){return x!==s;});render();});$('schedGroup').appendChild(l);});
+  ['Любой'].concat(expOpts).forEach(function(s,i){var l=document.createElement('label');l.className='check';l.innerHTML='<input type="radio" name="exp" id="exp'+i+'" value="'+(i?s:'')+'"'+(i?'':' checked')+'><span>'+s+'</span>';l.querySelector('input').addEventListener('change',function(e){state.exp=e.target.value;render();});$('expGroup').appendChild(l);});
+  $('salary').addEventListener('input',function(){state.salary=+this.value||0;render();});
+  $('withSalary').addEventListener('change',function(){state.withSalary=this.checked;render();});
+  $('sort').addEventListener('change',function(){state.sort=this.value;render();});
+  $('searchForm').addEventListener('submit',function(e){e.preventDefault();state.q=$('q').value.trim().toLowerCase();state.city=$('city').value;render();});
+  $('q').addEventListener('input',function(){state.q=this.value.trim().toLowerCase();render();});
+  $('city').addEventListener('change',function(){state.city=this.value;render();});
+  document.querySelectorAll('.hint').forEach(function(h){h.addEventListener('click',function(){$('q').value=h.dataset.q;state.q=h.dataset.q;render();});});
+  function resetAll(){state.q='';state.city='';state.salary=0;state.sched=[];state.exp='';state.withSalary=false;$('q').value='';$('city').value='';$('salary').value='';$('withSalary').checked=false;document.querySelectorAll('#schedGroup input').forEach(function(c){c.checked=false;});$('exp0').checked=true;render();}
+  $('resetAll').addEventListener('click',resetAll);
+  $('openFilters').addEventListener('click',function(){var f=$('filters'),o=!f.classList.contains('open');f.classList.toggle('open',o);this.setAttribute('aria-expanded',o);});
+
+  function matches(j,skip){
+    if(state.q){
+      var hay=(j.t+' '+j.c+' '+j.tags.join(' ')).toLowerCase();
+      var hit=state.q.indexOf(' ')>=0?hay.indexOf(state.q)>=0:hay.split(/[^a-zа-яё0-9+#]+/).some(function(w){return w.indexOf(state.q)===0;});
+      if(!hit)return false;
+    }
+    if(state.city&&j.city!==state.city)return false;
+    if(state.salary&&(Math.max(j.from,j.to)<state.salary))return false;
+    if(skip!=='sched'&&state.sched.length&&state.sched.indexOf(j.sched)<0)return false;
+    if(state.exp&&j.exp!==state.exp)return false;
+    if(state.withSalary&&!j.from&&!j.to)return false;
+    return true;
+  }
+
+  function render(){
+    var res=jobs.filter(function(j){return matches(j);});
+    res.sort(state.sort==='pay'?function(a,b){return (b.to||b.from)-(a.to||a.from);}:function(a,b){return a.days-b.days;});
+    document.querySelectorAll('[data-sched]').forEach(function(c){var s=c.dataset.sched;c.textContent=jobs.filter(function(j){return j.sched===s&&matches(j,'sched');}).length;});
+    document.querySelectorAll('.preset').forEach(function(p){p.setAttribute('aria-pressed',+p.dataset.v===state.salary?'true':'false');});
+    $('count').innerHTML='Найдено '+res.length+' '+vacWord(res.length)+(state.city?' <span>· '+state.city+'</span>':'');
+    var n=state.sched.length+(state.exp?1:0)+(state.salary?1:0)+(state.withSalary?1:0);
+    $('openFilters').textContent=n?'Фильтры · '+n:'Фильтры';
+    var chips=$('activeChips');chips.innerHTML='';
+    function chip(label,fn){var b=document.createElement('button');b.type='button';b.className='chip-x';b.textContent=label;b.setAttribute('aria-label','Убрать фильтр: '+label);b.addEventListener('click',fn);chips.appendChild(b);}
+    if(state.q)chip('«'+state.q+'»',function(){state.q='';$('q').value='';render();});
+    if(state.city)chip(state.city,function(){state.city='';$('city').value='';render();});
+    if(state.salary)chip('от '+fmt(state.salary)+' ₽',function(){state.salary=0;$('salary').value='';render();});
+    state.sched.forEach(function(s){chip(s,function(){state.sched=state.sched.filter(function(x){return x!==s;});document.querySelectorAll('#schedGroup input').forEach(function(c){if(c.value===s)c.checked=false;});render();});});
+    if(state.exp)chip(state.exp,function(){state.exp='';$('exp0').checked=true;render();});
+    if(state.withSalary)chip('С зарплатой',function(){state.withSalary=false;$('withSalary').checked=false;render();});
+    var list=$('list');list.innerHTML='';
+    if(!res.length){
+      var e=document.createElement('div');e.className='empty';
+      e.innerHTML='<h3>Подходящих вакансий нет</h3><p>Попробуйте убрать часть фильтров или поискать по другому слову.</p>';
+      var b=document.createElement('button');b.className='btn btn-ghost';b.type='button';b.textContent='Сбросить всё';b.addEventListener('click',resetAll);e.appendChild(b);list.appendChild(e);return;
+    }
+    res.forEach(function(j){
+      var a=document.createElement('article');a.className='job';
+      var hasPay=j.from||j.to;
+      a.innerHTML='<div><h3><a href="#jobs">'+j.t+'</a></h3><div class="company"><b>'+j.c+'</b><span>'+j.city+'</span></div></div>'+
+        '<div class="salary'+(hasPay?'':' none')+'">'+pay(j)+'</div>'+
+        '<div class="tags"><span class="tag">'+j.sched+'</span><span class="tag">'+j.exp+'</span>'+(j.days===0?'<span class="tag hot">Новая</span>':'')+j.tags.map(function(t){return '<span class="tag">'+t+'</span>';}).join('')+'</div>'+
+        '<div class="job-foot"><time>'+ago(j.days)+'</time></div>';
+      var foot=a.querySelector('.job-foot');
+      var save=document.createElement('button');save.type='button';save.className='save';save.setAttribute('aria-pressed',state.saved[j.id]?'true':'false');save.setAttribute('aria-label','В избранное');
+      save.innerHTML='<svg width="20" height="20" viewBox="0 0 20 20"><path d="M10 16.5s-6-3.6-6-8A3.5 3.5 0 0 1 10 6a3.5 3.5 0 0 1 6 2.5c0 4.4-6 8-6 8Z" stroke-linejoin="round"/></svg>';
+      save.addEventListener('click',function(){state.saved[j.id]=!state.saved[j.id];save.setAttribute('aria-pressed',state.saved[j.id]?'true':'false');});
+      var apply=document.createElement('button');apply.type='button';
+      function paint(){if(state.applied[j.id]){apply.className='btn applied';apply.textContent='Отклик отправлен';}else{apply.className='btn btn-primary';apply.textContent='Откликнуться';}}
+      apply.addEventListener('click',function(){if(!state.applied[j.id]){state.applied[j.id]=true;paint();}});
+      paint();foot.appendChild(save);foot.appendChild(apply);list.appendChild(a);
+    });
+  }
+  render();
+})();
+</script>
+
+</body>
+</html>

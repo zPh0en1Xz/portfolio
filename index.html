@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Портфолио: вёрстка и лендинги</title>
+<meta name="description" content="Примеры вёрстки: страница медицинской услуги, лендинг, интерфейс кадрового портала.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Onest:wght@400;500;600;700&display=swap">
+<style>
+:root{--bg:#F3F4F6;--surface:#FFFFFF;--ink:#16181D;--muted:#5D636E;--line:#DDE1E6;--accent:#2453D6;color-scheme:light}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.55 "Onest",system-ui,-apple-system,"Segoe UI",sans-serif;-webkit-font-smoothing:antialiased}
+.wrap{max-width:1120px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+header{padding-block:56px 32px}
+h1{margin:0;font-size:clamp(30px,4vw,46px);line-height:1.1;font-weight:700;text-wrap:balance}
+.lead{margin:16px 0 0;color:var(--muted);font-size:18px;max-width:38em}
+.services{display:flex;flex-wrap:wrap;gap:8px;margin-top:20px;padding:0;list-style:none}
+.services li{background:var(--surface);border:1px solid var(--line);border-radius:999px;padding:6px 14px;font-size:14px}
+.grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:20px;padding-block:8px 64px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:16px;overflow:hidden;text-decoration:none;color:inherit;display:grid;transition:transform .2s ease,box-shadow .2s ease,border-color .2s}
+.card:hover{transform:translateY(-4px);box-shadow:0 18px 36px -24px rgba(22,24,29,.5);border-color:#C3CAD4}
+.card:focus-visible{outline:3px solid #9DB4F5;outline-offset:3px}
+.card img{display:block;width:100%;height:auto;aspect-ratio:16/10;object-fit:cover;object-position:top;border-bottom:1px solid var(--line)}
+.card div{padding:18px 20px 22px;display:grid;gap:6px}
+.card h2{margin:0;font-size:19px;font-weight:600}
+.card p{margin:0;color:var(--muted);font-size:15px}
+.card span{margin-top:6px;color:var(--accent);font-weight:600;font-size:14px}
+footer{border-top:1px solid var(--line);padding-block:24px;color:var(--muted);font-size:14px}
+footer a{color:var(--accent)}
+@media (max-width:900px){.grid{grid-template-columns:minmax(0,1fr)}}
+@media (prefers-reduced-motion:reduce){.card{transition:none}}
+</style>
+</head>
+<body>
+<header class="wrap">
+  <h1>Вёрстка сайтов, лендинги и страницы услуг</h1>
+  <p class="lead">Адаптивная вёрстка по макетам, интерактивные элементы, формы заявок и цели Яндекс Метрики. Ниже демо-проекты: бренды вымышленные, код и интерфейсы рабочие.</p>
+  <ul class="services">
+    <li>Вёрстка по Figma и картинкам</li>
+    <li>Лендинги</li>
+    <li>Страницы для готовых сайтов</li>
+    <li>Анимации и интерактив</li>
+    <li>UX/UI-аудит</li>
+  </ul>
+</header>
+<main class="wrap grid">
+  <a class="card" href="klinika-prikus.html">
+    <img src="klinika.jpg" alt="Страница услуги стоматологической клиники со шторкой сравнения" width="960" height="600" loading="lazy">
+    <div><h2>Страница медицинской услуги</h2><p>Шторка «Проблема / Решение», чеклист симптомов, этапы приёма, форма записи с проверкой полей.</p><span>Открыть демо →</span></div>
+  </a>
+  <a class="card" href="skalodrom-zacep.html">
+    <img src="zacep.jpg" alt="Лендинг скалодрома с интерактивной стеной трасс" width="960" height="600" loading="lazy">
+    <div><h2>Лендинг скалодрома</h2><p>Интерактивная стена с трассами, тарифы, расписание групп, вопросы и запись на занятие.</p><span>Открыть демо →</span></div>
+  </a>
+  <a class="card" href="portal-smena.html">
+    <img src="smena.jpg" alt="Страница вакансий с фильтрами и поиском" width="960" height="600" loading="lazy">
+    <div><h2>Интерфейс кадрового портала</h2><p>Поиск, фильтры со счётчиками, сортировка, избранное и мобильная панель фильтров.</p><span>Открыть демо →</span></div>
+  </a>
+</main>
+<footer class="wrap">Заказать работу: <a href="https://kwork.ru/user/ph0en1x">профиль на Kwork</a></footer>
+</body>
+</html>
